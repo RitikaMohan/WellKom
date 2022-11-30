@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "982300103241",
+    "project_id": "wellkom-1cf3a",
+    "storage_bucket": "wellkom-1cf3a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:982300103241:android:e1b6c6087c7b212fd0e598",
+        "android_client_info": {
+          "package_name": "com.example.wellkom"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "982300103241-4lg94u0csogvt1vagq1vjl39afreb871.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDl2EzaJm1SgX-4KgsInPg0urzADEmmebA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "982300103241-4lg94u0csogvt1vagq1vjl39afreb871.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
