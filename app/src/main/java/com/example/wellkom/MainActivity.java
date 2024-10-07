@@ -9,7 +9,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,20 +23,24 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    public String name, mobile, email, date, time, govId, reason, personToMeet, building;
+    public String name, mobile, email, date, time, govId, reason, personToMeet, building, userId;
     EditText VisitorName, Mobile, Email, Date, Time, GovId, Reason, PersonToMeet, Building;
-    LinkedList<String> List = new LinkedList<String>();
     Button Submit, Upload, Select;
     ImageView imageView;
     private Uri filePath;
@@ -44,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
     FirebaseStorage storage;
     StorageReference storageReference;
     StorageReference pathReference;
+    FirebaseDatabase firebaseDatabase;
+    DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,10 +69,28 @@ public class MainActivity extends AppCompatActivity {
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReferenceFromUrl("gs://wellkom-1cf3a.appspot.com");
         pathReference = storageReference.child("images/cross.png");
+        firebaseDatabase = FirebaseDatabase.getInstance("https://wellkom-1cf3a-default-rtdb.firebaseio.com");
+        databaseReference = firebaseDatabase.getReference("Visitor's Information");
         // ATTENTION: This was auto-generated to handle app links.
-        Intent appLinkIntent = getIntent();
-        String appLinkAction = appLinkIntent.getAction();
-        Uri appLinkData = appLinkIntent.getData();
+        FirebaseDynamicLinks.getInstance()
+                .getDynamicLink(getIntent())
+                .addOnSuccessListener(this, new OnSuccessListener<PendingDynamicLinkData>() {
+                    @Override
+                    public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
+                        // Get deep link from result (may be null if no link is found)
+                        Uri deepLink = null;
+                        if (pendingDynamicLinkData != null) {
+                            deepLink = pendingDynamicLinkData.getLink();
+                        }
+                    }
+                })
+                .addOnFailureListener(this, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("MainActivity", "getDynamicLink:onFailure", e);
+                    }
+                });
+
     }
 
     private void setupUI() {
@@ -98,10 +124,12 @@ public class MainActivity extends AppCompatActivity {
     public void setUpListeners(View view) {
         Submit = findViewById(R.id.submit);
         Submit.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View view) {
-                Intent approver = new Intent(MainActivity.this, ApprovalActivity.class);
-                MainActivity.this.startActivity(approver);
+                details(VisitorName, Mobile, Date, Time, GovId, Reason, Building, Email, PersonToMeet);
+                validateInfo();
+
             }
 
         });
@@ -117,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
         Upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                userId = databaseReference.push().getKey();
                 uploadImage();
             }
         });
@@ -130,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)  {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -146,13 +175,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void uploadImage(){
+    private void uploadImage() {
         if (filePath != null) {
             ProgressDialog progressDialog = new ProgressDialog(this);
             progressDialog.setTitle("Uploading...");
             progressDialog.show();
 
-            StorageReference filereference = storageReference.child("images/" + UUID.randomUUID().toString());
+            StorageReference filereference = storageReference.child("images/"+ userId + ".png");
 
             // adding listeners on upload
             // or failure of image
@@ -177,12 +206,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                     })
                     .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                                @Override
-                                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                                    double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                                    progressDialog.setMessage("Uploaded " + (int) progress + "%");
-                                }
-                            });
+                        @Override
+                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                            double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                            progressDialog.setMessage("Uploaded " + (int) progress + "%");
+                        }
+                    });
         }
     }
 
@@ -206,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             details(VisitorName, Mobile, Date, Time, GovId, Reason, Building, Email, PersonToMeet);
-            Submit.setEnabled(!name.isEmpty() && !mobile.isEmpty() && !date.isEmpty() && !time.isEmpty() && !govId.isEmpty() && !reason.isEmpty()&& !building.isEmpty());
+            Submit.setEnabled(!name.isEmpty() && !mobile.isEmpty() && !date.isEmpty() && !time.isEmpty() && !govId.isEmpty() && !reason.isEmpty() && !building.isEmpty());
         }
 
         @Override
@@ -215,4 +244,40 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private void addDatatoFirebase() {
+
+        Map<String, Object> mHashmap = new HashMap<>();
+//        userId = databaseReference.push().getKey();
+        mHashmap.put(userId + "||" + name + "/Name", name);
+        mHashmap.put(userId + "||" + name + "/Mobile", mobile);
+        mHashmap.put(userId + "||" + name + "/Email", email);
+        mHashmap.put(userId + "||" + name + "/Date", date);
+        mHashmap.put(userId + "||" + name + "/Time", time);
+        mHashmap.put(userId + "||" + name + "/Government ID proof", govId);
+        mHashmap.put(userId + "||" + name + "/Reason of Visit", reason);
+        mHashmap.put(userId + "||" + name + "/Person to meet", personToMeet);
+        mHashmap.put(userId + "||" + name + "/Building", building);
+
+        databaseReference.updateChildren(mHashmap);
+    }
+    public void validateInfo(){
+
+        if (TextUtils.isEmpty(name) || TextUtils.isEmpty(mobile) || TextUtils.isEmpty(date) || TextUtils.isEmpty(time) || TextUtils.isEmpty(govId) || TextUtils.isEmpty(reason) || TextUtils.isEmpty(building)) {
+            Toast.makeText(MainActivity.this, "Please fill mandatory fields.", Toast.LENGTH_SHORT).show();
+            VisitorName.setError("Please enter your name");
+            Mobile.setError("Please enter your mobile number");
+            Date.setError("Please enter the visiting date");
+            Time.setError("Please enter your visiting time");
+            GovId.setError("Please enter your Government ID");
+            Reason.setError("Please enter the reason of visit");
+            Building.setError("Please enter the building to visit");
+
+        } else if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(mobile) && !TextUtils.isEmpty(date) && !TextUtils.isEmpty(time) && !TextUtils.isEmpty(govId) && !TextUtils.isEmpty(reason) && !TextUtils.isEmpty(building)) {
+            addDatatoFirebase();
+            Intent approver = new Intent(MainActivity.this, ApprovalActivity.class);
+            approver.putExtra("Visitor Id: ", "Visitor Id: " + userId);
+            MainActivity.this.startActivity(approver);
+            MainActivity.this.finish();
+        }
+    }
 }
