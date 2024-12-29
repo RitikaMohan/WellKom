@@ -11,6 +11,7 @@ Efficiently digitalize visitor entry processes with WellKom, an Android applicat
 - [Testing](#testing)
 - [Future Enhancements](#future-enhancements)
 - [Integrating a Local Database (Optional)](#integrating-a-local-databaseoptional)
+- [License](#license)
 
 
 ## Overview ##
