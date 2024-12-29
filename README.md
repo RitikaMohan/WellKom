@@ -11,6 +11,7 @@ Efficiently digitalize visitor entry processes with WellKom, an Android applicat
 - [Testing](#testing)
 - [Future Enhancements](#future-enhancements)
 - [Integrating a Local Database (Optional)](#integrating-a-local-databaseoptional)
+- [Creating Custom QR Codes](#creating_custom_qr_codes)
 - [License](#license)
 
 
@@ -161,6 +162,20 @@ public abstract class VisitorDatabase extends RoomDatabase {
 	- To ensure data consistency between the local database and Firebase:
 	- Use a background service (e.g., WorkManager) to periodically upload local data to Firebase when the internet is available.
 	- Remove data from the local database after a successful sync.
+
+## Creating Custom QR Codes ##
+Users can generate their own QR codes tailored to their version of the app. Follow these steps:
+
+1. Modify the App Link: Update the Firebase Dynamic Link to match your app version or custom deployment.
+2. Go to the Firebase Console > Dynamic Links > Create a new link.
+3. Set the deep link URL to your app-specific content or version.
+4. Generate the QR Code: Use a QR code generator tool like Scanova or any free online tool.
+5. Input the updated Firebase Dynamic Link to create the QR code.
+6. Test the QR Code:
+	- Scan the code using any QR code scanner.
+
+	- Ensure it redirects to the correct app page or content.
+7. Integrate in the App: Replace the existing QR code in the app resources with the newly generated code.
 
 
 ## License ##
