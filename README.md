@@ -160,3 +160,8 @@ public abstract class VisitorDatabase extends RoomDatabase {
 	- To ensure data consistency between the local database and Firebase:
 	- Use a background service (e.g., WorkManager) to periodically upload local data to Firebase when the internet is available.
 	- Remove data from the local database after a successful sync.
+
+
+## License ##
+
+This project is licensed under the MIT License. See the **LICENSE** file for details.
